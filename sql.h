@@ -1,6 +1,7 @@
 #include <string>
 #include <regex>
 #include <vector>
+#include <fstream>
 
 class SQL {
   public:
@@ -9,6 +10,9 @@ class SQL {
     }
 
   private:
+    // std::vector<std::string> student = { "name", "lastName", "age" };
+    // std::vector<std::string> lecturer = { "name", "lastName", "dep" };
+
     static void validate(std::string query) {
       std::string objectRegex = "\\s+?[^\\s]+?\\s+?";
       std::string conditionRegex = "(\\s([a-zA-z0-9_]+)\\s+([!=]+)\\s(.+)|\\s+[\\*])";
@@ -32,8 +36,21 @@ class SQL {
       std::string tableName = data[1];
       std::string condition = data[2];
 
-      std::cout << "tableName" << tableName << std::endl;
       std::cout << "condition" << condition << std::endl;
+
+      std::fstream fileStream;
+
+      fileStream.open("database/" + tableName);
+
+      if (fileStream.fail()) {
+        if (errno == 2) {
+          throw "TABLE_DOES_NOT_EXISTS";
+        }
+
+        throw strerror(errno);
+      } else {
+        std::cout << "Database is now available." << std::endl;
+      }
     }
 
     static std::vector<std::string> split(std::string s, std::regex r) {
@@ -50,6 +67,27 @@ class SQL {
         splits.push_back(s);
       }
 
+      for(std::vector<std::string>::iterator it = splits.begin(); it != splits.end(); ++it) {
+        trim(*it);
+      }
+
       return splits;
+    }
+
+    static inline void ltrim(std::string &s) {
+      s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
+        return !std::isspace(ch);
+      }));
+    }
+
+    static inline void rtrim(std::string &s) {
+      s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
+        return !std::isspace(ch);
+      }).base(), s.end());
+    }
+
+    static inline void trim(std::string &s) {
+      ltrim(s);
+      rtrim(s);
     }
 };
