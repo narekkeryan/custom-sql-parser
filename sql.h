@@ -14,16 +14,14 @@ class SQL {
     }
 
   private:
-    // std::vector<std::string> student = { "name", "lastName", "age" };
-    // std::vector<std::string> lecturer = { "name", "lastName", "dep" };
-
     static void validate(std::string query) {
       std::string objectRegex = "\\s+?[^\\s]+?\\s+?";
       std::string conditionRegex = "(\\s([a-zA-z0-9_]+)\\s+([!=]+)\\s(.+)|\\s+[\\*])";
 
       std::string selectQueryRegex = "(SELECT" + objectRegex + "WHERE" + conditionRegex + ")";
       std::string deleteQueryRegex = "(DELETE" + objectRegex + "WHERE" + conditionRegex + ")";
-      std::string validQueryRegex = selectQueryRegex + "|" + deleteQueryRegex;
+      std::string addQueryRegex = "(ADD\\s+?[^\\s]+)";
+      std::string validQueryRegex = selectQueryRegex + "|" + deleteQueryRegex + "|" + addQueryRegex;
 
       std::regex queryRegex(validQueryRegex, std::regex_constants::ECMAScript | std::regex_constants::icase);
 
@@ -35,10 +33,10 @@ class SQL {
     }
 
     static void execute(std::string query) {
-      std::vector<std::string> data = split(query, std::regex("select|delete|where", std::regex_constants::icase));
+      std::vector<std::string> data = split(query, std::regex("select|delete|add|where", std::regex_constants::icase));
 
       std::string tableName = data[1];
-      std::string condition = data[2];
+      std::string condition = data.size() >= 3 ? data[2] : "";
 
       std::fstream fileStream;
 
@@ -57,6 +55,8 @@ class SQL {
           executeSelect(tableName, condition);
         } else if (std::regex_search(query, std::regex("delete", std::regex_constants::icase))) {
           executeDelete(tableName, condition);
+        } else if (std::regex_search(query, std::regex("add", std::regex_constants::icase))) {
+          executeAdd(tableName);
         }
       }
     }
@@ -115,6 +115,46 @@ class SQL {
         rename("database/temp", p);
 
         std::cout << YELLOW << c << " RESULT" << RESET << std::endl;
+      }
+    }
+
+    static void executeAdd(std::string tableName) {
+      std::fstream tables;
+
+      tables.open("database/tables");
+
+      if (tables.fail()) {
+        throw strerror(errno);
+      } else {
+        std::string line;
+        while (std::getline(tables, line)) {
+          if (line.find(tableName) != std::string::npos) {
+            std::ofstream table;
+            table.open("database/" + tableName, std::fstream::app);
+
+            if (table.fail()) {
+              throw strerror(errno);
+            } else {
+              replace(line, tableName + ":", "");
+              std::string newLine = "";
+              std::string fieldValue;
+              std::vector<std::string> data = split(line, std::regex(","));
+              for(std::vector<std::string>::iterator it = data.begin(); it != data.end(); ++it) {
+                std::cout << *it << ": ";
+                std::cin >> fieldValue;
+
+                newLine += *it + " = " + fieldValue + " ";
+              }
+
+              table << newLine << std::endl;
+              table.close();
+
+              std::cout << YELLOW << "1 RESULT" << RESET << std::endl;
+            }
+          }
+        }
+
+        tables.close();
       }
     }
 
