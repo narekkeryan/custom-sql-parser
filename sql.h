@@ -72,7 +72,7 @@ class SQL {
         unsigned int c = 0;
         std::string str;
         while (std::getline(fileStream, str)) {
-          if (condition == "*" || str.find(condition) != std::string::npos) {
+          if (condition == "*" || matchCondition(str, condition)) {
             std::cout << GREEN << str << RESET << std::endl;
             c++;
           }
@@ -99,7 +99,7 @@ class SQL {
         unsigned int c = 0;
         std::string str;
         while (std::getline(fileStream, str)) {
-          if (condition == "*" || str.find(condition) != std::string::npos) {
+          if (condition == "*" || matchCondition(str, condition)) {
             c++;
             continue;
           }
@@ -115,6 +115,17 @@ class SQL {
         rename("database/temp", p);
 
         std::cout << YELLOW << c << " RESULT" << RESET << std::endl;
+      }
+    }
+
+    static bool matchCondition(std::string line, std::string condition) {
+      if (condition.find("!=") != std::string::npos) {
+        replace(condition, "!=", "=");
+        return line.find(condition) == std::string::npos;
+      } else if (condition.find("=") != std::string::npos) {
+        return line.find(condition) != std::string::npos;
+      } else {
+        return false;
       }
     }
 
@@ -154,5 +165,11 @@ class SQL {
     static inline void trim(std::string &s) {
       ltrim(s);
       rtrim(s);
+    }
+
+    static void replace(std::string& str, const std::string& from, const std::string& to) {
+      size_t start_pos = str.find(from);
+      if(start_pos != std::string::npos)
+        str.replace(start_pos, from.length(), to);
     }
 };
