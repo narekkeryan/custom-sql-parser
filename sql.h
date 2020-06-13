@@ -35,7 +35,7 @@ class SQL {
     }
 
     static void execute(std::string query) {
-      std::vector<std::string> data = split(query, std::regex("select|delete|where"));
+      std::vector<std::string> data = split(query, std::regex("select|delete|where", std::regex_constants::icase));
 
       std::string tableName = data[1];
       std::string condition = data[2];
@@ -53,9 +53,9 @@ class SQL {
       } else {
         fileStream.close();
 
-        if (std::regex_search(query, std::regex("select"))) {
+        if (std::regex_search(query, std::regex("select", std::regex_constants::icase))) {
           executeSelect(tableName, condition);
-        } else if (std::regex_search(query, std::regex("delete"))) {
+        } else if (std::regex_search(query, std::regex("delete", std::regex_constants::icase))) {
           executeDelete(tableName, condition);
         }
       }
