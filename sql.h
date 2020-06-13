@@ -3,6 +3,10 @@
 #include <vector>
 #include <fstream>
 
+#define RESET "\033[0m"
+#define GREEN "\033[32m"
+#define YELLOW "\033[33m"
+
 class SQL {
   public:
     static void customQuery(std::string query) {
@@ -36,8 +40,6 @@ class SQL {
       std::string tableName = data[1];
       std::string condition = data[2];
 
-      std::cout << "condition" << condition << std::endl;
-
       std::fstream fileStream;
 
       fileStream.open("database/" + tableName);
@@ -49,8 +51,43 @@ class SQL {
 
         throw strerror(errno);
       } else {
-        std::cout << "Database is now available." << std::endl;
+        fileStream.close();
+
+        if (std::regex_search(query, std::regex("select"))) {
+          executeSelect(tableName, condition);
+        } else if (std::regex_search(query, std::regex("delete"))) {
+          executeDelete(tableName, condition);
+        }
       }
+    }
+
+    static void executeSelect(std::string tableName, std::string condition) {
+      std::fstream fileStream;
+
+      fileStream.open("database/" + tableName);
+
+      if (fileStream.fail()) {
+        throw strerror(errno);
+      } else {
+        unsigned int c = 0;
+        std::string str;
+        while (std::getline(fileStream, str)) {
+          if (condition == "*" || str.find(condition) != std::string::npos) {
+            std::cout << GREEN << str << RESET << std::endl;
+            c++;
+          }
+        }
+
+        if (c == 0) {
+          std::cout << YELLOW << "NO_RESULT" << RESET << std::endl;
+        }
+
+        fileStream.close();
+      }
+    }
+
+    static void executeDelete(std::string tableName, std::string condition) {
+
     }
 
     static std::vector<std::string> split(std::string s, std::regex r) {
