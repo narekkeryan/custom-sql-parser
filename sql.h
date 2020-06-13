@@ -78,16 +78,44 @@ class SQL {
           }
         }
 
-        if (c == 0) {
-          std::cout << YELLOW << "NO_RESULT" << RESET << std::endl;
-        }
+        std::cout << YELLOW << c << " RESULT" << RESET << std::endl;
 
         fileStream.close();
       }
     }
 
     static void executeDelete(std::string tableName, std::string condition) {
+      std::string path = "database/" + tableName;
 
+      std::fstream fileStream;
+      std::ofstream temp;
+
+      fileStream.open(path);
+      temp.open("database/temp");
+
+      if (fileStream.fail()) {
+        throw strerror(errno);
+      } else {
+        unsigned int c = 0;
+        std::string str;
+        while (std::getline(fileStream, str)) {
+          if (condition == "*" || str.find(condition) != std::string::npos) {
+            c++;
+            continue;
+          }
+
+          temp << str << std::endl;
+        }
+
+        fileStream.close();
+        temp.close();
+
+        const char * p = path.c_str();
+        remove(p);
+        rename("database/temp", p);
+
+        std::cout << YELLOW << c << " RESULT" << RESET << std::endl;
+      }
     }
 
     static std::vector<std::string> split(std::string s, std::regex r) {
